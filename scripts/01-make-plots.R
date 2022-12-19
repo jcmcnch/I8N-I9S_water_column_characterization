@@ -7,23 +7,27 @@ d <- read.csv(args[1], sep=',')
 #remove null values
 d[d==-999] <- NA
 
+### Uncomment after CTDSAL in metadata ###
+
 #read in metadata file
-mdata <- read.csv(args[5], sep='\t', header=TRUE)
+#mdata <- read.csv(args[5], sep='\t', header=TRUE)
 #remove null values
-mdata[mdata==-999] <- NA
-dnaconc <- mdata[["DNA.concentration.ng.uL"]]
-eukfrac <- mdata[["Eukaryotic_Fraction_from_Trimmed_Sequences_.18S.16S.18S."]]
+#mdata[mdata==-999] <- NA
+#dnaconc <- mdata[["DNA.concentration.ng.uL"]]
+#eukfrac <- mdata[["Eukaryotic_Fraction_from_Trimmed_Sequences_.18S.16S.18S."]]
 #nitrate <- mdata[["Nitrate"]]
 
 #transform metadata into another CTD object so R-oce can understand how to plot it
 #salinity.bottle <- mdata[["Salinity"]]
-temperature.bottle <- mdata[["Temperature"]]
-pressure.bottle <- mdata[["Pressure"]]
-mdata <- as.ctd(salinity.bottle, temperature.bottle, pressure.bottle)
+#temperature.bottle <- mdata[["Temperature"]]
+#pressure.bottle <- mdata[["Pressure"]]
+#mdata <- as.ctd(salinity.bottle, temperature.bottle, pressure.bottle)
 #add additional data to CTD object
-mdata <- oceSetData(mdata, '[DNA] (ng/µL)', value=dnaconc)
-mdata <- oceSetData(mdata, 'Fraction 18S SSU rRNA', value=eukfrac)
+#mdata <- oceSetData(mdata, '[DNA] (ng/µL)', value=dnaconc)
+#mdata <- oceSetData(mdata, 'Fraction 18S SSU rRNA', value=eukfrac)
 #mdata <- oceSetData(mdata, 'Nitrate (µm/kg)', value=nitrate)
+
+### Uncomment me... ###
 
 #get CTD basics
 salinity <- d[["CTDSAL"]]
@@ -41,15 +45,22 @@ ctd <- as.ctd(salinity, temperature, pressure)
 ctd <- oceSetData(ctd, 'CTD Oxygen (µm/kg)', value=ctdoxy)
 ctd <- oceSetData(ctd, 'Beam Attenuation (1/m)', value=beamatt)
 
+#calculate sigmaTheta, buoyancy frequency and add to CTD object
+sigmaTheta <- swSigmaTheta(ctd)
+ctd <- oceSetData(ctd, "density", value=sigmaTheta)
+N2 <- swN2(ctd)
+ctd <- oceSetData(ctd, "N2", value=N2)
+
 #make plot
 ylimit=as.double(args[2])
 pdf(args[4], width=7,height=9)
 #multiple columns
-par(mfrow=c(1,3), mar=c(1,1,1,1), oma=c(10,1,1,1))
+par(mfrow=c(1,5), mar=c(1,1,1,1), oma=c(10,1,1,1))
 #plot templerature profile
 plotProfile(ctd, xtype="temperature", ylim=c(ylimit, 0), xlim=c(0,25))
 temperature <- ctd[["temperature"]]
 pressure <- ctd[["pressure"]]
+
 #define MLD with two different methods and plot as line
 for (criterion in c(0.1, 0.5)) {
     inMLD <- abs(temperature[1]-temperature) < criterion
@@ -57,6 +68,22 @@ for (criterion in c(0.1, 0.5)) {
     MLDpressure <- pressure[MLDindex]
     abline(h=pressure[MLDindex], lwd=2, lty="dashed")
 }
+
+#plot sigma theta with line as above
+plotProfile(ctd, xtype="density", ylim=c(ylimit, 0))
+for (criterion in c(0.25)) {
+    inSigmaTheta <- abs(density[1]-density) < criterion
+    DensityIndex <- which.min(inSigmaTheta)
+    MLDpressure <- pressure[DensityIndex]
+    abline(h=pressure[DensityIndex], lwd=2, lty="dashed")
+}
+
+#plot buoyant density with maximum line
+plotProfile(ctd, xtype="N2", ylim=c(ylimit, 0))
+N2 <- ctd[["N2"]]
+maxN2 <- which.max(N2)
+abline(h=pressure[maxN2], lwd=2, lty="dashed")
+
 #plot other data sources
 plotProfile(ctd, xtype="CTD Oxygen (µm/kg)", ylim=c(ylimit, 0), col="darkblue")
 plotProfile(ctd, xtype="Beam Attenuation (1/m)", ylim=c(ylimit, 0), col="red")
