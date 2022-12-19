@@ -7,6 +7,24 @@ d <- read.csv(args[1], sep=',')
 #remove null values
 d[d==-999] <- NA
 
+#read in metadata file
+mdata <- read.csv(args[5], sep='\t', header=TRUE)
+#remove null values
+mdata[mdata==-999] <- NA
+dnaconc <- mdata[["DNA.concentration.ng.uL"]]
+eukfrac <- mdata[["Eukaryotic_Fraction_from_Trimmed_Sequences_.18S.16S.18S."]]
+#nitrate <- mdata[["Nitrate"]]
+
+#transform metadata into another CTD object so R-oce can understand how to plot it
+#salinity.bottle <- mdata[["Salinity"]]
+temperature.bottle <- mdata[["Temperature"]]
+pressure.bottle <- mdata[["Pressure"]]
+mdata <- as.ctd(salinity.bottle, temperature.bottle, pressure.bottle)
+#add additional data to CTD object
+mdata <- oceSetData(mdata, '[DNA] (ng/µL)', value=dnaconc)
+mdata <- oceSetData(mdata, 'Fraction 18S SSU rRNA', value=eukfrac)
+#mdata <- oceSetData(mdata, 'Nitrate (µm/kg)', value=nitrate)
+
 #get CTD basics
 salinity <- d[["CTDSAL"]]
 temperature <- d[["CTDTMP"]]
