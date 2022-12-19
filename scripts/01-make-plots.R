@@ -60,6 +60,7 @@ par(mfrow=c(1,5), mar=c(1,1,1,1), oma=c(10,1,1,1))
 plotProfile(ctd, xtype="temperature", ylim=c(ylimit, 0), xlim=c(0,25))
 temperature <- ctd[["temperature"]]
 pressure <- ctd[["pressure"]]
+density <- ctd[["density"]]
 
 #define MLD with two different methods and plot as line
 for (criterion in c(0.1, 0.5)) {
