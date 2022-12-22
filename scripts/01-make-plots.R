@@ -13,6 +13,7 @@ mdata <- read.csv(args[5], sep='\t', header=TRUE)
 mdata[mdata==-999] <- NA
 dnaconc <- mdata[["DNA.concentration.ng.uL"]]
 eukfrac <- mdata[["Eukaryotic_Fraction_from_Trimmed_Sequences_.18S.16S.18S."]]
+plasfrac <- mdata[["plasFrac"]]
 #nitrate <- mdata[["Nitrate"]]
 
 #transform metadata into another CTD object so R-oce can understand how to plot it
@@ -23,6 +24,7 @@ mdata <- as.ctd(salinity.bottle, temperature.bottle, pressure.bottle)
 #add additional data to CTD object
 mdata <- oceSetData(mdata, '[DNA] (ng/µL)', value=dnaconc)
 mdata <- oceSetData(mdata, 'Fraction 18S SSU rRNA', value=eukfrac)
+mdata <- oceSetData(mdata, 'Fraction Plastid SSU rRNA', value=plasfrac)
 #mdata <- oceSetData(mdata, 'Nitrate (µm/kg)', value=nitrate)
 
 #get CTD basics
@@ -51,7 +53,7 @@ ctd <- oceSetData(ctd, "N2", value=N2)
 ylimit=as.double(args[2])
 pdf(args[4], width=12,height=9)
 #multiple columns
-par(mfrow=c(1,7), mar=c(1,1,1,1), oma=c(10,1,1,1))
+par(mfrow=c(1,8), mar=c(1,1,1,1), oma=c(10,1,1,1))
 #plot templerature profile
 plotProfile(ctd, xtype="temperature", ylim=c(ylimit, 0), xlim=c(0,25))
 temperature <- ctd[["temperature"]]
@@ -86,6 +88,7 @@ plotProfile(ctd, xtype="CTD Oxygen (µm/kg)", ylim=c(ylimit, 0), col="darkblue")
 plotProfile(ctd, xtype="Beam Attenuation (1/m)", ylim=c(ylimit, 0), col="red")
 plotProfile(mdata, xtype="[DNA] (ng/µL)", ylim=c(ylimit, 0), col="orange", type="b")
 plotProfile(mdata, xtype="Fraction 18S SSU rRNA", ylim=c(ylimit, 0), col="green", type="b")
+plotProfile(mdata, xtype="Fraction Plastid SSU rRNA", ylim=c(ylimit, 0), col="darkgreen", type="b")
 
 #source = https://stackoverflow.com/questions/7367138/text-wrap-for-plot-titles
 wrap_strings <- function(vector_of_strings,width){sapply(vector_of_strings,FUN=function(x){paste(strwrap(x,width=width), collapse="\n")})}
